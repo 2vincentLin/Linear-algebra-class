@@ -16,7 +16,8 @@ class Vector(object):
             raise ValueError('The coordinates must be nonempty')
         except TypeError:
             raise TypeError('The coordinates must be an iterable')
-            
+
+    # vector plu vector
     def plus(self, v):
         try:
             if self.dimension != v.dimension:
@@ -26,7 +27,8 @@ class Vector(object):
             
         new_coordinates= [x+y for x, y in zip(self.coordinates, v.coordinates)]
         return Vector(new_coordinates)
-    
+
+    # vectore minus vector
     def minus(self, v):
         try:
             if self.dimension != v.dimension:
@@ -37,25 +39,30 @@ class Vector(object):
         new_coordinates= [x-y for x, y in zip(self.coordinates, v.coordinates)]
         return Vector(new_coordinates)     
 
+    # vector time a constant
     def times_scalar(self, c):
         new_coordinates= [Decimal(c)*x for x in self.coordinates]
         return Vector(new_coordinates)
-    
+
+    # calculate the magnitude of the vector    
     def magnitude(self):
         coordinates_squared= [x**2 for x in self.coordinates]
         return Decimal(sqrt(sum(coordinates_squared)))
         # after sqrt(), type will become float
-    
+ 
+    # normalize the vector
     def normalized(self):
         try:
             temp= self.magnitude()
             return self.times_scalar(Decimal('1.0')/self.magnitude())
         except ZeroDivisionError:
             raise ZeroDivisionError('Cannot normalize the zero vector')
-            
+    
+    # dot product (inner product)        
     def dot(self, v):
         return sum([x*y for x, y in zip(self.coordinates, v.coordinates)])
-    
+
+    # calculate the angle between two vectors    
     def angle_with(self, v, in_degrees= False):
         try:
             u1= self.normalized()
@@ -69,18 +76,21 @@ class Vector(object):
         except ZeroDivisionError:
             raise ZeroDivisionError('Cannot compute angle with zero vector')
         # if zero vector, normalized will raise ZeroDivisionError
-        
+
+    # return the if the two vectors orthogonal to each other        
     def is_orthogonal_to(self, v, tolerance= 1e-20):
         return abs(self.dot(v)) < tolerance
     
+    # return if the vector is zero vector (I didn't use tolerance)
     def is_zero(self):
         return sum([abs(x) for x in self.coordinates]) == 0
     
     def is_parallel_to(self, v):
         return (self.is_zero() or
                 v.is_zero() or
-                self.angle_with(v) == 0 or
-                self.angle_with(v) == pi)
+                abs(self.angle_with(v)) <= 1e-7 or
+                abs(self.angle_with(v)) <= pi+1e-7)
+        # due to the round error, [1,1].angle_with([1,1]) won't give zero degree 
 
     def component_parallel_to(self, basis):
         try:
@@ -97,7 +107,22 @@ class Vector(object):
             raise ZeroDivisionError('Zero vector has no unique orthogonal component')
         # in here, from normalized() to component_parallel_to(), you have to
         # keep raise ZeroDivisionError, 
-        
+
+    def cross(self, v):
+        try:
+            a1, a2, a3= self.coordinates
+            b1, b2, b3= v.coordinates
+            new_coordinates= [a2*b3 - a3*b2, a3*b1 - b3*a1, a1*b2 - b1*a2]
+            return Vector(new_coordinates)
+        except Exception as e:
+            print str(e)
+            print 'only support 3 dimensions vectors'
+            
+    def area_of_parallelogram_with(self, v):
+        return (self.cross(v)).magnitude()
+    
+    def area_of_triangle_with(self, v):
+        return self.area_of_parallelogram_with(v)/Decimal('2.0')
         
     def __str__(self):
         return 'Vector: {}'.format(self.coordinates)
@@ -106,7 +131,6 @@ class Vector(object):
     def __eq__(self, v):
         return self.coordinates == v.coordinates
 
-test= Vector([0, 0])
-test1= Vector([0,1])
 
-print test.component_orthogonal_to(test1)
+
+
