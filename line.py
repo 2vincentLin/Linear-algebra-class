@@ -17,9 +17,11 @@ class Line(object):
             normal_vector = Vector(all_zeros)
         self.normal_vector = normal_vector
 
+
         if not constant_term:
             constant_term = Decimal('0')
-        self.constant_term = Decimal(constant_term)
+        self.constant_term = Decimal(constant_term)     
+
 
         self.set_basepoint()
 
@@ -54,8 +56,10 @@ class Line(object):
             
             p1, p2= b2*k1 - a2*k2, a1*k2 - b1*k1
             
+            
             return Vector([p1, p2]).times_scalar(Decimal('1.0')/(a1*b2 - a2*b1))
         except ZeroDivisionError:
+
             if self == ell:
                 return self
             else:
@@ -138,8 +142,9 @@ class MyDecimal(Decimal):
     def is_near_zero(self, eps=1e-10):
         return abs(self) < eps
 
-test= Line(Vector([1, 1]), 4)
-test1= Line(Vector([1, 1]), 3)
+test= Line(Vector([4.046, 2.836]), 1.21)
+test1= Line(Vector([10.115, 7.09]), 3.025)
 
+#
 
 print test.intersection_with(test1)

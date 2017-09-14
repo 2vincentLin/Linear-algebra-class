@@ -9,7 +9,7 @@ class Vector(object):
             if not coordinates:
                 raise ValueError
             self.coordinates = tuple([Decimal(x) for x in coordinates])
-            # tuple will raise a TypeError if coordinates is not iterable
+
             self.dimension = len(coordinates)
 
         except ValueError:
@@ -88,9 +88,9 @@ class Vector(object):
     def is_parallel_to(self, v):
         return (self.is_zero() or
                 v.is_zero() or
-                abs(self.angle_with(v)) <= 1e-7 or
-                abs(self.angle_with(v)) <= pi+1e-7)
-        # due to the round error, [1,1].angle_with([1,1]) won't give zero degree 
+                self.angle_with(v) == 0 or
+                self.angle_with(v) == pi)
+
 
     def component_parallel_to(self, basis):
         try:
