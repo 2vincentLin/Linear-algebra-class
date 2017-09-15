@@ -67,7 +67,18 @@ class Vector(object):
         try:
             u1= self.normalized()
             u2= v.normalized()
-            angle_in_radians= acos(u1.dot(u2))
+            
+            # when calculate [1,1].angle_with([1,1]), it'll happen acos(1.00000001)
+            # domain error, so I add the following code to deal the rounding error
+            temp= u1.dot(u2)
+            if abs(temp) <= 1 + 1e-10:
+                if temp > 0:
+                    temp= 1
+                else:
+                    temp= -1
+            
+            
+            angle_in_radians= acos(temp)
             
             if in_degrees:
                 return angle_in_radians*180./pi
@@ -131,6 +142,6 @@ class Vector(object):
     def __eq__(self, v):
         return self.coordinates == v.coordinates
 
-
-
-
+a= Vector(['1','1', '1'])
+b= Vector(['1','1'])
+a.angle_with(b)
