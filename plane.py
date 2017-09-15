@@ -89,7 +89,7 @@ class Plane(object):
 
             return output
 
-        n = self.normal_vector
+        n = self.normal_vector.coordinates
 
         try:
             initial_index = Plane.first_nonzero_index(n)
@@ -136,3 +136,5 @@ print a.is_parallel_to(b), '  ', a == b
 a= Plane(Vector(['-7.926', '8.625', '-7.212']), '-7.952')
 b= Plane(Vector(['-2.642', '2.875', '-2.404']), '-2.443')
 print a.is_parallel_to(b), '  ', a == b
+
+print a
