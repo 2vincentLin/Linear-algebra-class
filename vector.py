@@ -68,8 +68,8 @@ class Vector(object):
             u1= self.normalized()
             u2= v.normalized()
             
-            # when calculate [1,1].angle_with([1,1]), it'll happen acos(1.00000001)
-            # domain error, so I add the following code to deal the rounding error
+            # when calculate [1,1].angle_with([1,1]), something happens like acos(1.00000001)
+            # and cause domain error, so I add the following code to deal the rounding error
             temp= u1.dot(u2)
             if abs(temp) <= 1 + 1e-10:
                 if temp > 0:
