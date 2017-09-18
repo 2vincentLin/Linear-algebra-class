@@ -25,18 +25,43 @@ class LinearSystem(object):
         except AssertionError:
             raise Exception(self.ALL_PLANES_MUST_BE_IN_SAME_DIM_MSG)
             
+    def solve(self):
+        rref= self.compute_rref()
+        if self.dimension > len(self):
+            n= len(self)
+        else:
+            n= self.dimension
+            
+        # no solution, 0=k, infinite solution, 0=0 for pivot
+        
+        # if there's 0=k in any equation, print no solution, return rref
+        for i in range(len(self)):
+            if rref[i].normal_vector.is_zero() and (rref[i].constant_term != 0):
+                print self.NO_SOLUTIONS_MSG
+                return rref
+        # if there's 0=0 in any pivot equation, print infinite solution, return rref
+        for i in range(n):
+            if rref[i].normal_vector.is_zero() and (rref[i].constant_term == 0):
+                print self.INF_SOLUTIONS_MSG
+                return rref
+        print 'one solution'
+        return rref
+        
+        
+        
             
     def compute_rref(self):
         tf= self.compute_triangular_form()
         
         # if the system has less equation than dimension, or other way around,
-        # it may cause index out of range
+        # it may cause index out of range. n stands for number of pivot(maximum)
         if self.dimension > len(self):
             n= len(self)
         else:
             n= self.dimension
         
-        # all coefficient of pivot go to 1
+        # all coefficient of pivot become 1
+        # one bug, if 0x_1+0x_2+ax_3 in 2nd equation, this loop will fail
         for i in range(n):
             if not MyDecimal(tf[i].normal_vector.coordinates[i]).is_near_zero():
                 coe= Decimal('1.0')/tf[i].normal_vector.coordinates[i]
@@ -44,11 +69,12 @@ class LinearSystem(object):
         
         # this loop perform elimination from bottom to top        
         for i in range(n - 1, 0, -1):
-            # loop from [n -1, ... ,2,1]
+            # loop from [n-1, ... ,2,1], n-1 is last row with pivot
             for j in range(i-1, -1, -1):
-                # loop from [n-1,..., 1,0]
+                # loop from [n-2,..., 1,0]
                 if not MyDecimal(tf[i].normal_vector.coordinates[i]).is_near_zero():
-                    # this check may not be necessary because impossible to have ZeroDivisionError
+                    # this check may not be necessary because it's impossible to have ZeroDivisionError
+                    # since coe of pivots are 1 now.
 
                     coe= tf[j].normal_vector.coordinates[i]
                     tf.add_multiple_times_row_to_row(-coe, i, j)      
@@ -162,45 +188,18 @@ class MyDecimal(Decimal):
 
 
 p0 = Plane(normal_vector=Vector(['1','2','3']), constant_term='1')
-p1 = Plane(normal_vector=Vector(['4','5','6']), constant_term='4')
-p2 = Plane(normal_vector=Vector(['7','8','4']), constant_term='8')
+p1 = Plane(normal_vector=Vector(['2','4','6']), constant_term='4')
+p2 = Plane(normal_vector=Vector(['1','2','3']), constant_term='1')
 
-s = LinearSystem([p0,p1,p2])
 
-p1 = Plane(normal_vector=Vector(['1','1','1']), constant_term='1')
-p2 = Plane(normal_vector=Vector(['0','1','1']), constant_term='2')
-s = LinearSystem([p1,p2])
-r = s.compute_rref()
-if not (r[0] == Plane(normal_vector=Vector(['1','0','0']), constant_term='-1') and
-        r[1] == p2):
-    print 'test case 1 failed'
+s = LinearSystem([p0,p1,p2, p0])
+print s.solve()
 
-p1 = Plane(normal_vector=Vector(['1','1','1']), constant_term='1')
-p2 = Plane(normal_vector=Vector(['1','1','1']), constant_term='2')
-s = LinearSystem([p1,p2])
-r = s.compute_rref()
-if not (r[0] == p1 and
-        r[1] == Plane(constant_term='1')):
-    print 'test case 2 failed'
+p0 = Plane(normal_vector=Vector(['0.786','0.786','0.588']), constant_term='-0.714')
+p1 = Plane(normal_vector=Vector(['-0.138','-0.138','0.244']), constant_term='0.319')
 
-p1 = Plane(normal_vector=Vector(['1','1','1']), constant_term='1')
-p2 = Plane(normal_vector=Vector(['0','1','0']), constant_term='2')
-p3 = Plane(normal_vector=Vector(['1','1','-1']), constant_term='3')
-p4 = Plane(normal_vector=Vector(['1','0','-2']), constant_term='2')
-s = LinearSystem([p1,p2,p3,p4])
-r = s.compute_rref()
-if not (r[0] == Plane(normal_vector=Vector(['1','0','0']), constant_term='0') and
-        r[1] == p2 and
-        r[2] == Plane(normal_vector=Vector(['0','0','-2']), constant_term='2') and
-        r[3] == Plane()):
-    print 'test case 3 failed'
 
-p1 = Plane(normal_vector=Vector(['0','1','1']), constant_term='1')
-p2 = Plane(normal_vector=Vector(['1','-1','1']), constant_term='2')
-p3 = Plane(normal_vector=Vector(['1','2','-5']), constant_term='3')
-s = LinearSystem([p1,p2,p3])
-r = s.compute_rref()
-if not (r[0] == Plane(normal_vector=Vector(['1','0','0']), constant_term=Decimal('23')/Decimal('9')) and
-        r[1] == Plane(normal_vector=Vector(['0','1','0']), constant_term=Decimal('7')/Decimal('9')) and
-        r[2] == Plane(normal_vector=Vector(['0','0','1']), constant_term=Decimal('2')/Decimal('9'))):
-    print 'test case 4 failed'
+s = LinearSystem([p0,p1])
+print s.compute_triangular_form()
+print s.solve()
+
