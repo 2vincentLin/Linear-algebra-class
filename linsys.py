@@ -27,10 +27,6 @@ class LinearSystem(object):
             
     def solve(self):
         rref= self.compute_rref()
-        if self.dimension > len(self):
-            n= len(self)
-        else:
-            n= self.dimension
             
         # no solution, 0=k, infinite solution, 0=0 for pivot
         
@@ -39,14 +35,66 @@ class LinearSystem(object):
             if rref[i].normal_vector.is_zero() and (rref[i].constant_term != 0):
                 print self.NO_SOLUTIONS_MSG
                 return rref
-        # if there's 0=0 in any pivot equation, print infinite solution, return rref
-        for i in range(n):
+            
+        
+        # if variables > number of equations, then print infinite solutions, return rref
+        if self.dimension > len(self):
+            print self.INF_SOLUTIONS_MSG
+            self.parametrization(rref)
+            return rref
+
+        # if there's 0=0 in any pivot equation, print infinite solution, return rref        
+        for i in range(self.dimension):
             if rref[i].normal_vector.is_zero() and (rref[i].constant_term == 0):
                 print self.INF_SOLUTIONS_MSG
+                self.parametrization(rref)
                 return rref
+            
         print 'one solution'
         return rref
+
+    def parametrization(self, rref):
         
+
+        free_variables= []
+        for i, j in enumerate(rref.indices_of_first_nonzero_terms_in_each_row()):
+            if i != j:
+                free_variables.append(i)
+        free_variables
+        
+
+        pivot_in_eq= rref.indices_of_first_nonzero_terms_in_each_row()
+        # i need to know which variable in which equations, because sometimes x_3 in 2nd equation
+        for i in range(self.dimension):
+            # start from first variables
+            output= 'x_{}'.format(i+1) + ' = '
+            if i in pivot_in_eq:
+                # not free
+                eq= pivot_in_eq.index(i) # get which equation
+                output+= str(round(rref[eq].constant_term, 3))
+                for k, l in enumerate(free_variables):
+                    if l >= self.dimension:
+                    # sometime there will be more free variables than dimension
+                        break
+                    if rref[eq].normal_vector.coordinates[l] >= 0:
+                        output= output + ' - ' + str(round(rref[eq].normal_vector.coordinates[l],3))
+                    else:
+                        output= output + ' + ' + str(round(abs(rref[eq].normal_vector.coordinates[l]),3))
+                    output+= ' t_{}'.format(k+1)  
+                print output               
+            else:
+                for k, l in enumerate(free_variables):
+                    if l >= self.dimension:
+                        break
+                    if i == l:
+                        # i == l means i-th variables is free variable
+                        output+= '+ 1.0t_{}'.format(k+1)
+                    else:
+                        # append other variables
+                        output+= '+ 0.0t_{}'.format(k+1)            
+                print output
+
+                
         
         
             
@@ -61,24 +109,23 @@ class LinearSystem(object):
             n= self.dimension
         
         # all coefficient of pivot become 1
-        # one bug, if 0x_1+0x_2+ax_3 in 2nd equation, this loop will fail
         for i in range(n):
-            if not MyDecimal(tf[i].normal_vector.coordinates[i]).is_near_zero():
-                coe= Decimal('1.0')/tf[i].normal_vector.coordinates[i]
-                tf.multiply_coefficient_and_row(coe, i)
-        
-        # this loop perform elimination from bottom to top        
-        for i in range(n - 1, 0, -1):
-            # loop from [n-1, ... ,2,1], n-1 is last row with pivot
-            for j in range(i-1, -1, -1):
-                # loop from [n-2,..., 1,0]
-                if not MyDecimal(tf[i].normal_vector.coordinates[i]).is_near_zero():
-                    # this check may not be necessary because it's impossible to have ZeroDivisionError
-                    # since coe of pivots are 1 now.
-
-                    coe= tf[j].normal_vector.coordinates[i]
-                    tf.add_multiple_times_row_to_row(-coe, i, j)      
-                            
+            for j in range(i, self.dimension):
+                # if the coe is 0 on pivot position, then search for next
+                if not MyDecimal(tf[i].normal_vector.coordinates[j]).is_near_zero():
+                    coe= Decimal('1.0')/tf[i].normal_vector.coordinates[j]
+                    tf.multiply_coefficient_and_row(coe, i)
+                    break # once done, break the current loop
+                    
+        for i, j in reversed(list(enumerate(tf.indices_of_first_nonzero_terms_in_each_row()))):
+            # i means i-th equation, j means first non-zero variable on i-th equation
+            if j == -1:
+                # j == -1 means all coe zero, skip this loop
+                continue
+            for k in range(i-1, -1, -1):             
+                coe= tf[k].normal_vector.coordinates[j]
+                tf.add_multiple_times_row_to_row(-coe, i, k)
+            
         return tf
             
     def compute_triangular_form(self):
@@ -132,9 +179,7 @@ class LinearSystem(object):
         new_vector= self[row_to_be_added_to].normal_vector.plus(add_vector)
         new_constant= self[row_to_be_added_to].constant_term + add_term
         self[row_to_be_added_to]= Plane(new_vector, new_constant)
-        pass # add your code here
-        
-
+        pass         
 
 
     def indices_of_first_nonzero_terms_in_each_row(self):
@@ -188,18 +233,27 @@ class MyDecimal(Decimal):
 
 
 p0 = Plane(normal_vector=Vector(['1','2','3']), constant_term='1')
-p1 = Plane(normal_vector=Vector(['2','4','6']), constant_term='4')
-p2 = Plane(normal_vector=Vector(['1','2','3']), constant_term='1')
+p1 = Plane(normal_vector=Vector(['2','4','6']), constant_term='2')
+p2 = Plane(normal_vector=Vector(['1','2','4']), constant_term='3')
 
 
-s = LinearSystem([p0,p1,p2, p0])
+s = LinearSystem([p0,p1,p2])
 print s.solve()
 
 p0 = Plane(normal_vector=Vector(['0.786','0.786','0.588']), constant_term='-0.714')
 p1 = Plane(normal_vector=Vector(['-0.138','-0.138','0.244']), constant_term='0.319')
-
-
 s = LinearSystem([p0,p1])
-print s.compute_triangular_form()
 print s.solve()
 
+p0 = Plane(normal_vector=Vector(['8.631','5.112','-1.816']), constant_term='-5.113')
+p1 = Plane(normal_vector=Vector(['4.315','11.132','-5.27']), constant_term='-6.775')
+p2 = Plane(normal_vector=Vector(['-2.158','3.01','-1.727']), constant_term='-0.831')
+s = LinearSystem([p0,p1, p2])
+print s.solve()
+
+p0 = Plane(normal_vector=Vector(['0.935','1.76','-9.365']), constant_term='-9.955')
+p1 = Plane(normal_vector=Vector(['0.187','0.352','-1.873']), constant_term='-1.991')
+p2 = Plane(normal_vector=Vector(['0.374','0.704','-3.746']), constant_term='-3.982')
+p3 = Plane(normal_vector=Vector(['-0.561','-1.056','5.619']), constant_term='5.973')
+s = LinearSystem([p0, p1, p2, p3])
+print s.solve()
